@@ -7,65 +7,30 @@ export default function SetupPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [dbStatus, setDbStatus] = useState('');
-  const [setupStatus, setSetupStatus] = useState('');
+  const [envCheck, setEnvCheck] = useState('');
 
-  const checkDatabase = async () => {
+  const checkEnvironment = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/messages/unanswered');
-      if (response.ok) {
-        setDbStatus('✅ データベース接続OK');
+      // 環境変数の確認
+      const envResponse = await fetch('/api/admin/setup', {
+        method: 'GET'
+      });
+      
+      if (envResponse.status === 200) {
+        setEnvCheck('✅ 環境設定OK - 管理者作成の準備完了');
+      } else if (envResponse.status === 409) {
+        setEnvCheck('⚠️ 管理者は既に存在します');
       } else {
-        setDbStatus('❌ データベース接続エラー - スキーマの初期化が必要かもしれません');
+        setEnvCheck('✅ 管理者作成可能');
       }
     } catch (error) {
-      setDbStatus('❌ データベース接続エラー: ' + error);
+      setEnvCheck('❌ 環境確認エラー: ' + error);
     } finally {
       setLoading(false);
     }
   };
 
-  const initDatabase = async () => {
-    setLoading(true);
-    setSetupStatus('データベース接続をテスト中...');
-    
-    try {
-      // データベース接続テスト
-      const testResponse = await fetch('/api/db-setup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'test-connection' }),
-      });
-      
-      if (!testResponse.ok) {
-        const errorData = await testResponse.json();
-        throw new Error('データベース接続失敗: ' + errorData.message);
-      }
-      
-      setSetupStatus('テーブルを作成中...');
-      
-      // テーブル作成
-      const createResponse = await fetch('/api/db-setup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create-tables' }),
-      });
-      
-      const createData = await createResponse.json();
-      
-      if (createResponse.ok) {
-        setSetupStatus('✅ データベース初期化完了！');
-        setDbStatus('✅ データベース準備完了');
-      } else {
-        setSetupStatus('❌ データベース初期化エラー: ' + createData.message);
-      }
-    } catch (error) {
-      setSetupStatus('❌ データベース初期化エラー: ' + error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const createAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,33 +70,19 @@ export default function SetupPage() {
           </p>
         </div>
 
-        {/* データベース確認・初期化 */}
+        {/* 環境確認 */}
         <div className="space-y-4">
           <button
-            onClick={checkDatabase}
+            onClick={checkEnvironment}
             disabled={loading}
             className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            {loading ? 'チェック中...' : 'データベース接続確認'}
+            {loading ? 'チェック中...' : '環境状態を確認'}
           </button>
           
-          <button
-            onClick={initDatabase}
-            disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50"
-          >
-            {loading ? '初期化中...' : 'データベース初期化'}
-          </button>
-          
-          {dbStatus && (
+          {envCheck && (
             <div className="text-sm text-center">
-              {dbStatus}
-            </div>
-          )}
-          
-          {setupStatus && (
-            <div className="text-sm text-center">
-              {setupStatus}
+              {envCheck}
             </div>
           )}
         </div>
