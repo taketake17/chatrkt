@@ -69,21 +69,21 @@ export default function Home() {
     }
   };
 
-  const startPolling = () => {
+  const startPolling = (targetSessionId: string) => {
     if (pollingInterval) {
       clearInterval(pollingInterval);
     }
     
     // sessionIdがない場合はポーリングを開始しない
-    if (!sessionId) {
+    if (!targetSessionId) {
       console.warn('startPolling called without sessionId');
       return;
     }
     
     const interval = setInterval(async () => {
-      if (sessionId) {
+      if (targetSessionId) {
         try {
-          const response = await fetch(`/api/sessions/${sessionId}/messages`);
+          const response = await fetch(`/api/sessions/${targetSessionId}/messages`);
           if (response.ok) {
             const sessionMessages = await response.json();
             
@@ -193,6 +193,17 @@ export default function Home() {
       });
 
       if (response.ok) {
+        // メッセージ送信後、すぐにセッションのメッセージを取得し直す
+        const messagesResponse = await fetch(`/api/sessions/${currentSessionId}/messages`);
+        if (messagesResponse.ok) {
+          const sessionMessages = await messagesResponse.json();
+          const updatedMessages = sessionMessages.map((msg: Message) => ({
+            ...msg,
+            createdAt: new Date(msg.createdAt)
+          }));
+          setMessages(updatedMessages);
+        }
+        
         const tempMessage: Message = {
           id: (Date.now() + 1).toString(),
           content: 'メッセージを受信しました。Chat RKTが本気で考えています...',
@@ -203,7 +214,7 @@ export default function Home() {
         
         // ポーリングで回答を待機
         if (currentSessionId) {
-          startPolling();
+          startPolling(currentSessionId);
         }
       }
     } catch (error) {
