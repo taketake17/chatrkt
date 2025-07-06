@@ -15,10 +15,12 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState<{ id: string; username: string } | null>(null);
+  const [systemStatus, setSystemStatus] = useState<'active' | 'maintenance'>('active');
   const router = useRouter();
 
   useEffect(() => {
     checkAuthStatus();
+    fetchSystemStatus();
   }, []);
 
   // 認証されてもすぐにはセッションを作成しない
@@ -51,6 +53,18 @@ export default function Home() {
       setIsAuthenticated(false);
     } finally {
       setChecking(false);
+    }
+  };
+
+  const fetchSystemStatus = async () => {
+    try {
+      const response = await fetch('/api/system-status');
+      if (response.ok) {
+        const data = await response.json();
+        setSystemStatus(data.status);
+      }
+    } catch (error) {
+      console.error('Failed to fetch system status:', error);
     }
   };
 
@@ -305,6 +319,25 @@ export default function Home() {
                 <p className="text-md text-gray-500 mb-8">
                   {isAuthenticated ? 'まるで大切な友人のように、あなたの言葉に耳を傾け、人間味あふれる対話でお応えします。' : '人間味あふれる「本気」の対話で、あなたの心に寄り添います。'}
                 </p>
+                
+                {/* システムステータス表示 */}
+                <div className={`inline-block px-4 py-2 rounded-lg mb-6 ${
+                  systemStatus === 'active' 
+                    ? 'bg-green-900 text-green-200 border border-green-700' 
+                    : 'bg-yellow-900 text-yellow-200 border border-yellow-700'
+                }`}>
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-2 h-2 rounded-full ${
+                      systemStatus === 'active' ? 'bg-green-400' : 'bg-yellow-400'
+                    }`}></div>
+                    <span className="text-sm font-medium">
+                      {systemStatus === 'active' 
+                        ? 'Chat RKTは元気に稼働中です。' 
+                        : 'ただいまChat RKTは休憩中です。再開をお待ちください。'}
+                    </span>
+                  </div>
+                </div>
+                
                 {!isAuthenticated && (
                   <div className="text-sm text-gray-500 mb-8">
                     メッセージを送信するにはログインまたは新規登録が必要です

@@ -21,6 +21,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true); // 認証確認中の状態
   const [activeTab, setActiveTab] = useState<'unanswered' | 'answered'>('unanswered');
+  const [systemStatus, setSystemStatus] = useState<'active' | 'maintenance'>('active');
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
   // ページ読み込み時に認証状態を確認
   useEffect(() => {
@@ -31,8 +33,24 @@ export default function AdminPage() {
     if (isAuthenticated) {
       fetchUnansweredMessages();
       fetchAnsweredMessages();
+      fetchSystemStatus();
+      startPolling();
     }
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
   }, [isAuthenticated]);
+
+  // クリーンアップ
+  useEffect(() => {
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [pollingInterval]);
 
   const checkAuthStatus = async () => {
     try {
@@ -100,6 +118,52 @@ export default function AdminPage() {
     }
   };
 
+  const fetchSystemStatus = async () => {
+    try {
+      const response = await fetch('/api/admin/system-status');
+      if (response.ok) {
+        const data = await response.json();
+        setSystemStatus(data.status);
+      }
+    } catch (error) {
+      console.error('Failed to fetch system status:', error);
+    }
+  };
+
+  const startPolling = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+    }
+    
+    const interval = setInterval(() => {
+      fetchUnansweredMessages();
+      fetchAnsweredMessages();
+    }, 3000); // 3秒間隔で更新
+    
+    setPollingInterval(interval);
+  };
+
+  const updateSystemStatus = async (status: 'active' | 'maintenance') => {
+    try {
+      const response = await fetch('/api/admin/system-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSystemStatus(status);
+        alert(data.message);
+      } else {
+        alert('ステータス更新に失敗しました');
+      }
+    } catch (error) {
+      console.error('Failed to update system status:', error);
+      alert('ステータス更新に失敗しました');
+    }
+  };
+
   const handleAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMessage || !answerContent.trim()) return;
@@ -144,6 +208,10 @@ export default function AdminPage() {
       setUnansweredMessages([]);
       setSelectedMessage(null);
       setAnswerContent('');
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+      }
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -224,6 +292,26 @@ export default function AdminPage() {
             <div className="text-sm text-gray-600">
               管理者: admin
             </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">システム状態:</span>
+              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                systemStatus === 'active' 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {systemStatus === 'active' ? '稼働中' : 'メンテナンス中'}
+              </span>
+            </div>
+            <button
+              onClick={() => updateSystemStatus(systemStatus === 'active' ? 'maintenance' : 'active')}
+              className={`px-4 py-2 text-white rounded-lg transition-colors text-sm ${
+                systemStatus === 'active'
+                  ? 'bg-yellow-500 hover:bg-yellow-600'
+                  : 'bg-green-500 hover:bg-green-600'
+              }`}
+            >
+              {systemStatus === 'active' ? 'メンテナンス開始' : 'メンテナンス終了'}
+            </button>
             <button
               onClick={handleLogout}
               className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
