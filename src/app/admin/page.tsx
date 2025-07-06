@@ -184,6 +184,15 @@ export default function AdminPage() {
               {loading ? 'ログイン中...' : 'ログイン'}
             </button>
           </form>
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-600 mb-2">初回セットアップが必要な場合：</p>
+            <a 
+              href="/setup"
+              className="inline-block px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm"
+            >
+              セットアップページへ
+            </a>
+          </div>
         </div>
       </div>
     );
