@@ -7,6 +7,7 @@ import remarkGfm from 'remark-gfm';
 
 interface MessageWithSession extends Message {
   session: Session;
+  adminReply?: Message;
 }
 
 export default function AdminPage() {
@@ -337,16 +338,16 @@ export default function AdminPage() {
                           {message.content}
                         </ReactMarkdown>
                       </div>
-                      {(message as any).adminReply && (
+                      {message.adminReply && (
                         <div className="border-t pt-3">
                           <div className="text-sm font-medium text-gray-700 mb-1">回答:</div>
                           <div className="bg-blue-50 p-3 rounded text-gray-900">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {(message as any).adminReply.content}
+                              {message.adminReply.content}
                             </ReactMarkdown>
                           </div>
                           <div className="text-xs text-gray-500 mt-2">
-                            回答日時: {new Date((message as any).adminReply.createdAt).toLocaleString('ja-JP')}
+                            回答日時: {new Date(message.adminReply.createdAt).toLocaleString('ja-JP')}
                           </div>
                         </div>
                       )}
