@@ -9,9 +9,16 @@ export async function POST(request: NextRequest) {
   try {
     const { username, email, password } = await request.json();
 
-    if (!username || !email || !password) {
+    if (!username || !password) {
       return NextResponse.json(
-        { message: 'ユーザー名、メールアドレス、パスワードを入力してください' },
+        { message: 'ユーザー名とパスワードを入力してください' },
+        { status: 400 }
+      );
+    }
+    
+    if (!email) {
+      return NextResponse.json(
+        { message: 'メールアドレスを入力してください' },
         { status: 400 }
       );
     }
