@@ -289,12 +289,6 @@ export default function Home() {
               >
                 新規登録
               </button>
-              <button
-                onClick={() => router.push('/setup')}
-                className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm"
-              >
-                セットアップ
-              </button>
             </div>
           )}
         </div>

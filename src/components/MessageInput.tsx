@@ -24,9 +24,11 @@ export function MessageInput({ onSendMessage, disabled }: MessageInputProps) {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // エンターキーでの送信を無効化
+    // Shift + Enter で改行のみ許可
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      // 送信はしない
     }
   };
 
@@ -70,7 +72,7 @@ export function MessageInput({ onSendMessage, disabled }: MessageInputProps) {
           </div>
         </div>
         <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-          <span>Shift + Enter で改行</span>
+          <span>Shift + Enter で改行、送信ボタンでメッセージ送信</span>
           <span className={`${content.length > 1000 ? 'text-red-400' : ''}`}>
             {content.length}/2000
           </span>
