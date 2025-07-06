@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    // 未回答のメッセージをフィルタリング
-    const unansweredMessages = [];
+    // 回答済みのメッセージをフィルタリング
+    const answeredMessages = [];
     for (const userMessage of userMessages) {
       const hasReplyAfter = await prisma.message.findFirst({
         where: {
@@ -48,18 +48,19 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      if (!hasReplyAfter) {
-        unansweredMessages.push(userMessage);
+      if (hasReplyAfter) {
+        answeredMessages.push({
+          ...userMessage,
+          adminReply: hasReplyAfter,
+        });
       }
     }
 
-    const messages = unansweredMessages;
-
-    return NextResponse.json(messages);
+    return NextResponse.json(answeredMessages);
   } catch (error) {
-    console.error('Failed to fetch unanswered messages:', error);
+    console.error('Failed to fetch answered messages:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch unanswered messages' },
+      { error: 'Failed to fetch answered messages' },
       { status: 500 }
     );
   }

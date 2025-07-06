@@ -14,10 +14,12 @@ export default function AdminPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [unansweredMessages, setUnansweredMessages] = useState<MessageWithSession[]>([]);
+  const [answeredMessages, setAnsweredMessages] = useState<MessageWithSession[]>([]);
   const [answerContent, setAnswerContent] = useState('');
   const [selectedMessage, setSelectedMessage] = useState<MessageWithSession | null>(null);
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true); // 認証確認中の状態
+  const [activeTab, setActiveTab] = useState<'unanswered' | 'answered'>('unanswered');
 
   // ページ読み込み時に認証状態を確認
   useEffect(() => {
@@ -27,6 +29,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchUnansweredMessages();
+      fetchAnsweredMessages();
     }
   }, [isAuthenticated]);
 
@@ -84,6 +87,18 @@ export default function AdminPage() {
     }
   };
 
+  const fetchAnsweredMessages = async () => {
+    try {
+      const response = await fetch('/api/admin/messages/answered');
+      if (response.ok) {
+        const messages = await response.json();
+        setAnsweredMessages(messages);
+      }
+    } catch (error) {
+      console.error('Failed to fetch answered messages:', error);
+    }
+  };
+
   const handleAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMessage || !answerContent.trim()) return;
@@ -104,6 +119,7 @@ export default function AdminPage() {
         setAnswerContent('');
         setSelectedMessage(null);
         fetchUnansweredMessages();
+        fetchAnsweredMessages();
         alert('回答を送信しました');
       } else {
         alert('回答の送信に失敗しました');
@@ -218,25 +234,51 @@ export default function AdminPage() {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4 text-gray-900">未回答の質問</h2>
+            <div className="flex space-x-4 mb-4 border-b">
+              <button
+                onClick={() => setActiveTab('unanswered')}
+                className={`pb-2 px-1 ${
+                  activeTab === 'unanswered'
+                    ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                未回答の質問 ({unansweredMessages.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('answered')}
+                className={`pb-2 px-1 ${
+                  activeTab === 'answered'
+                    ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                回答済みの質問 ({answeredMessages.length})
+              </button>
+            </div>
+            
             <div className="space-y-4 max-h-96 overflow-y-auto">
-              {unansweredMessages.length === 0 ? (
-                <p className="text-gray-500">未回答の質問はありません</p>
-              ) : (
-                unansweredMessages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                      selectedMessage?.id === message.id
-                        ? 'bg-blue-50 border-blue-300'
-                        : 'hover:bg-gray-50'
-                    }`}
-                    onClick={() => setSelectedMessage(message)}
-                  >
-                    <div className="text-sm text-gray-500 mb-2">
-                      {new Date(message.createdAt).toLocaleString('ja-JP')}
-                    </div>
-                    <div className="max-w-none text-gray-900" style={{ color: '#111827' }}>
+              {activeTab === 'unanswered' ? (
+                unansweredMessages.length === 0 ? (
+                  <p className="text-gray-500">未回答の質問はありません</p>
+                ) : (
+                  unansweredMessages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                        selectedMessage?.id === message.id
+                          ? 'bg-blue-50 border-blue-300'
+                          : 'hover:bg-gray-50'
+                      }`}
+                      onClick={() => setSelectedMessage(message)}
+                    >
+                      <div className="text-sm text-gray-500 mb-2 flex justify-between">
+                        <span>{new Date(message.createdAt).toLocaleString('ja-JP')}</span>
+                        <span className="font-medium text-blue-600">
+                          ユーザー: {message.session.user?.username || '不明'}
+                        </span>
+                      </div>
+                      <div className="max-w-none text-gray-900" style={{ color: '#111827' }}>
                       <ReactMarkdown 
                         remarkPlugins={[remarkGfm]}
                         components={{
@@ -255,9 +297,62 @@ export default function AdminPage() {
                       >
                         {message.content}
                       </ReactMarkdown>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))
+                )
+              ) : (
+                answeredMessages.length === 0 ? (
+                  <p className="text-gray-500">回答済みの質問はありません</p>
+                ) : (
+                  answeredMessages.map((message) => (
+                    <div
+                      key={message.id}
+                      className="p-4 border rounded-lg bg-green-50 border-green-200"
+                    >
+                      <div className="text-sm text-gray-500 mb-2 flex justify-between">
+                        <span>{new Date(message.createdAt).toLocaleString('ja-JP')}</span>
+                        <span className="font-medium text-green-600">
+                          ユーザー: {message.session.user?.username || '不明'}
+                        </span>
+                      </div>
+                      <div className="max-w-none text-gray-900 mb-3" style={{ color: '#111827' }}>
+                        <div className="text-sm font-medium text-gray-700 mb-1">質問:</div>
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            p: ({ children }) => <p className="text-gray-900 mb-2" style={{ color: '#111827' }}>{children}</p>,
+                            h1: ({ children }) => <h1 className="text-gray-900 text-lg font-bold mb-2" style={{ color: '#111827' }}>{children}</h1>,
+                            h2: ({ children }) => <h2 className="text-gray-900 text-base font-bold mb-2" style={{ color: '#111827' }}>{children}</h2>,
+                            h3: ({ children }) => <h3 className="text-gray-900 text-sm font-bold mb-2" style={{ color: '#111827' }}>{children}</h3>,
+                            strong: ({ children }) => <strong className="text-gray-900 font-bold" style={{ color: '#111827' }}>{children}</strong>,
+                            em: ({ children }) => <em className="text-gray-900" style={{ color: '#111827' }}>{children}</em>,
+                            code: ({ children }) => <code className="bg-gray-100 text-gray-900 px-1 py-0.5 rounded text-sm" style={{ color: '#111827', backgroundColor: '#f3f4f6' }}>{children}</code>,
+                            pre: ({ children }) => <pre className="bg-gray-100 text-gray-900 p-2 rounded text-sm overflow-x-auto" style={{ color: '#111827', backgroundColor: '#f3f4f6' }}>{children}</pre>,
+                            ul: ({ children }) => <ul className="text-gray-900 list-disc list-inside mb-2" style={{ color: '#111827' }}>{children}</ul>,
+                            ol: ({ children }) => <ol className="text-gray-900 list-decimal list-inside mb-2" style={{ color: '#111827' }}>{children}</ol>,
+                            li: ({ children }) => <li className="text-gray-900" style={{ color: '#111827' }}>{children}</li>,
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
+                      {(message as any).adminReply && (
+                        <div className="border-t pt-3">
+                          <div className="text-sm font-medium text-gray-700 mb-1">回答:</div>
+                          <div className="bg-blue-50 p-3 rounded text-gray-900">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {(message as any).adminReply.content}
+                            </ReactMarkdown>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-2">
+                            回答日時: {new Date((message as any).adminReply.createdAt).toLocaleString('ja-JP')}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )
               )}
             </div>
           </div>

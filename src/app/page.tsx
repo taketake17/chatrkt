@@ -300,7 +300,7 @@ export default function Home() {
                   {isAuthenticated && user ? `こんにちは、${user.username}さん！` : 'Chat RKT'}
                 </h1>
                 <p className="text-lg text-gray-400 mb-4">
-                  {isAuthenticated ? '何でもお気軽にお聞きください' : 'AIとの「本気」の対話を、あなたに。'}
+                  {isAuthenticated ? '何でもお気軽にお聞きください' : 'Chat RKTとの「本気」の対話を、あなたに。'}
                 </p>
                 <p className="text-md text-gray-500 mb-8">
                   {isAuthenticated ? 'まるで大切な友人のように、あなたの言葉に耳を傾け、人間味あふれる対話でお応えします。' : '人間味あふれる「本気」の対話で、あなたの心に寄り添います。'}

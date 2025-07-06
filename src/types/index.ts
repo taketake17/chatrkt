@@ -13,6 +13,7 @@ export interface Session {
   updatedAt: Date;
   messages: Message[];
   displayName?: string; // 表示用の名前
+  user?: User; // ユーザー情報
 }
 
 export interface AdminUser {
@@ -26,6 +27,7 @@ export interface AdminUser {
 export interface User {
   id: string;
   username: string;
+  email?: string;
   password: string;
   createdAt: Date;
   updatedAt: Date;
