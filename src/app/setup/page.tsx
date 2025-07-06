@@ -28,35 +28,37 @@ export default function SetupPage() {
 
   const initDatabase = async () => {
     setLoading(true);
-    setSetupStatus('データベースを初期化中...');
+    setSetupStatus('データベース接続をテスト中...');
     
     try {
-      // Prismaクライアント生成
-      const generateResponse = await fetch('/api/db-setup', {
+      // データベース接続テスト
+      const testResponse = await fetch('/api/db-setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'generate' }),
+        body: JSON.stringify({ action: 'test-connection' }),
       });
       
-      if (!generateResponse.ok) {
-        throw new Error('Prismaクライアント生成に失敗');
+      if (!testResponse.ok) {
+        const errorData = await testResponse.json();
+        throw new Error('データベース接続失敗: ' + errorData.message);
       }
       
-      setSetupStatus('スキーマをプッシュ中...');
+      setSetupStatus('テーブルを作成中...');
       
-      // データベーススキーマプッシュ
-      const pushResponse = await fetch('/api/db-setup', {
+      // テーブル作成
+      const createResponse = await fetch('/api/db-setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'push-schema' }),
+        body: JSON.stringify({ action: 'create-tables' }),
       });
       
-      if (pushResponse.ok) {
+      const createData = await createResponse.json();
+      
+      if (createResponse.ok) {
         setSetupStatus('✅ データベース初期化完了！');
-        setDbStatus('');
+        setDbStatus('✅ データベース準備完了');
       } else {
-        const errorData = await pushResponse.json();
-        setSetupStatus('❌ データベース初期化エラー: ' + errorData.message);
+        setSetupStatus('❌ データベース初期化エラー: ' + createData.message);
       }
     } catch (error) {
       setSetupStatus('❌ データベース初期化エラー: ' + error);

@@ -1,36 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { prisma } from '@/lib/prisma';
 
-const execAsync = promisify(exec);
+export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
-    // セキュリティチェック - 本番環境でのみ実行可能にする
     const { action } = await request.json();
     
-    if (action === 'push-schema') {
-      // Prismaスキーマをデータベースにプッシュ
-      const { stdout, stderr } = await execAsync('npx prisma db push --force-reset');
-      
-      return NextResponse.json({
-        success: true,
-        message: 'データベーススキーマをプッシュしました',
-        stdout,
-        stderr
-      });
+    if (action === 'test-connection') {
+      // データベース接続テスト
+      try {
+        await prisma.$connect();
+        await prisma.$disconnect();
+        
+        return NextResponse.json({
+          success: true,
+          message: 'データベース接続成功'
+        });
+      } catch (error) {
+        return NextResponse.json({
+          success: false,
+          message: 'データベース接続失敗',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
+      }
     }
     
-    if (action === 'generate') {
-      // Prismaクライアントを生成
-      const { stdout, stderr } = await execAsync('npx prisma generate');
-      
-      return NextResponse.json({
-        success: true,
-        message: 'Prismaクライアントを生成しました',
-        stdout,
-        stderr
-      });
+    if (action === 'create-tables') {
+      // テーブル作成を試行
+      try {
+        // Adminユーザーテーブルの存在確認・作成
+        await prisma.$executeRaw`
+          CREATE TABLE IF NOT EXISTS "Admin" (
+            "id" TEXT NOT NULL PRIMARY KEY,
+            "username" TEXT NOT NULL UNIQUE,
+            "password" TEXT NOT NULL,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+          );
+        `;
+        
+        // Userテーブルの存在確認・作成
+        await prisma.$executeRaw`
+          CREATE TABLE IF NOT EXISTS "User" (
+            "id" TEXT NOT NULL PRIMARY KEY,
+            "username" TEXT NOT NULL UNIQUE,
+            "password" TEXT NOT NULL,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+          );
+        `;
+        
+        // Sessionテーブルの存在確認・作成
+        await prisma.$executeRaw`
+          CREATE TABLE IF NOT EXISTS "Session" (
+            "id" TEXT NOT NULL PRIMARY KEY,
+            "name" TEXT,
+            "userId" TEXT NOT NULL,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
+          );
+        `;
+        
+        // Messageテーブルの存在確認・作成
+        await prisma.$executeRaw`
+          CREATE TABLE IF NOT EXISTS "Message" (
+            "id" TEXT NOT NULL PRIMARY KEY,
+            "content" TEXT NOT NULL,
+            "type" TEXT NOT NULL,
+            "sessionId" TEXT NOT NULL,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY ("sessionId") REFERENCES "Session"("id") ON DELETE CASCADE ON UPDATE CASCADE
+          );
+        `;
+        
+        return NextResponse.json({
+          success: true,
+          message: 'データベーステーブルが作成されました'
+        });
+      } catch (error) {
+        return NextResponse.json({
+          success: false,
+          message: 'テーブル作成エラー',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
+      }
     }
     
     return NextResponse.json({
