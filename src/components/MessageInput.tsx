@@ -3,17 +3,23 @@
 import { useState, KeyboardEvent } from 'react';
 
 interface MessageInputProps {
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string) => Promise<void>;
   disabled: boolean;
 }
 
 export function MessageInput({ onSendMessage, disabled }: MessageInputProps) {
   const [content, setContent] = useState('');
+  const [sending, setSending] = useState(false);
 
-  const handleSend = () => {
-    if (content.trim() && !disabled) {
-      onSendMessage(content.trim());
-      setContent('');
+  const handleSend = async () => {
+    if (content.trim() && !disabled && !sending) {
+      setSending(true);
+      try {
+        await onSendMessage(content.trim());
+        setContent('');
+      } finally {
+        setSending(false);
+      }
     }
   };
 
@@ -36,7 +42,7 @@ export function MessageInput({ onSendMessage, disabled }: MessageInputProps) {
               placeholder="メッセージを入力してください..."
               className="w-full resize-none bg-gray-800 text-white border border-gray-600 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-gray-400 text-sm"
               rows={1}
-              disabled={disabled}
+              disabled={disabled || sending}
               style={{
                 minHeight: '48px',
                 maxHeight: '200px'
@@ -44,7 +50,7 @@ export function MessageInput({ onSendMessage, disabled }: MessageInputProps) {
             />
             <button
               onClick={handleSend}
-              disabled={disabled || !content.trim()}
+              disabled={disabled || !content.trim() || sending}
               className="absolute right-2 bottom-2 p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"
             >
               <svg

@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 
 export async function GET() {
   try {
-    // 一時的に全セッションを取得（認証実装後に修正）
+    const cookieStore = await cookies();
+    const authCookie = cookieStore.get('user-auth');
+
+    if (!authCookie) {
+      return NextResponse.json(
+        { error: '認証が必要です' },
+        { status: 401 }
+      );
+    }
+
+    // 認証されたユーザーのセッションのみを取得
     const sessions = await prisma.session.findMany({
+      where: { userId: authCookie.value },
       orderBy: { updatedAt: 'desc' },
       include: {
         messages: {
@@ -28,28 +40,22 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    // 一時的にダミーユーザーIDを使用（認証実装後に修正）
-    const { name } = await request.json();
-    
-    // ダミーユーザーを作成または取得
-    let user = await prisma.user.findFirst({
-      where: { username: 'anonymous' }
-    });
-    
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          username: 'anonymous',
-          email: 'anonymous@temp.com',
-          password: 'temp', // 一時的
-        }
-      });
+    const cookieStore = await cookies();
+    const authCookie = cookieStore.get('user-auth');
+
+    if (!authCookie) {
+      return NextResponse.json(
+        { error: '認証が必要です' },
+        { status: 401 }
+      );
     }
+
+    const { name } = await request.json();
     
     const session = await prisma.session.create({
       data: {
         name,
-        userId: user.id,
+        userId: authCookie.value,
       },
     });
 

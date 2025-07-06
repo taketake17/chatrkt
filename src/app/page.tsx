@@ -146,7 +146,7 @@ export default function Home() {
     }
   };
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (content: string): Promise<void> => {
     // 認証されていない場合はログインページにリダイレクト
     if (!isAuthenticated) {
       router.push('/login');
