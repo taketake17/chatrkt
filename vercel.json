@@ -1,10 +1,8 @@
 {
-  "build": {
-    "env": {
-      "SKIP_ENV_VALIDATION": "true"
+  "buildCommand": "npm run vercel-build",
+  "functions": {
+    "app/api/**/*.ts": {
+      "runtime": "nodejs18.x"
     }
-  },
-  "env": {
-    "SKIP_ENV_VALIDATION": "true"
   }
 }
