@@ -8,6 +8,7 @@ export default function SetupPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [dbStatus, setDbStatus] = useState('');
+  const [setupStatus, setSetupStatus] = useState('');
 
   const checkDatabase = async () => {
     setLoading(true);
@@ -16,10 +17,49 @@ export default function SetupPage() {
       if (response.ok) {
         setDbStatus('✅ データベース接続OK');
       } else {
-        setDbStatus('❌ データベース接続エラー');
+        setDbStatus('❌ データベース接続エラー - スキーマの初期化が必要かもしれません');
       }
     } catch (error) {
       setDbStatus('❌ データベース接続エラー: ' + error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const initDatabase = async () => {
+    setLoading(true);
+    setSetupStatus('データベースを初期化中...');
+    
+    try {
+      // Prismaクライアント生成
+      const generateResponse = await fetch('/api/db-setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate' }),
+      });
+      
+      if (!generateResponse.ok) {
+        throw new Error('Prismaクライアント生成に失敗');
+      }
+      
+      setSetupStatus('スキーマをプッシュ中...');
+      
+      // データベーススキーマプッシュ
+      const pushResponse = await fetch('/api/db-setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'push-schema' }),
+      });
+      
+      if (pushResponse.ok) {
+        setSetupStatus('✅ データベース初期化完了！');
+        setDbStatus('');
+      } else {
+        const errorData = await pushResponse.json();
+        setSetupStatus('❌ データベース初期化エラー: ' + errorData.message);
+      }
+    } catch (error) {
+      setSetupStatus('❌ データベース初期化エラー: ' + error);
     } finally {
       setLoading(false);
     }
@@ -63,7 +103,7 @@ export default function SetupPage() {
           </p>
         </div>
 
-        {/* データベース確認 */}
+        {/* データベース確認・初期化 */}
         <div className="space-y-4">
           <button
             onClick={checkDatabase}
@@ -72,9 +112,24 @@ export default function SetupPage() {
           >
             {loading ? 'チェック中...' : 'データベース接続確認'}
           </button>
+          
+          <button
+            onClick={initDatabase}
+            disabled={loading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50"
+          >
+            {loading ? '初期化中...' : 'データベース初期化'}
+          </button>
+          
           {dbStatus && (
             <div className="text-sm text-center">
               {dbStatus}
+            </div>
+          )}
+          
+          {setupStatus && (
+            <div className="text-sm text-center">
+              {setupStatus}
             </div>
           )}
         </div>
