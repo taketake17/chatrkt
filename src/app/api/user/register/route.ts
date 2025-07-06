@@ -7,11 +7,20 @@ export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    const { username, email, password } = await request.json();
 
-    if (!username || !password) {
+    if (!username || !email || !password) {
       return NextResponse.json(
-        { message: 'ユーザー名とパスワードを入力してください' },
+        { message: 'ユーザー名、メールアドレス、パスワードを入力してください' },
+        { status: 400 }
+      );
+    }
+
+    // メールアドレスの形式チェック
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { message: '有効なメールアドレスを入力してください' },
         { status: 400 }
       );
     }
@@ -24,13 +33,25 @@ export async function POST(request: NextRequest) {
     }
 
     // ユーザー名の重複チェック
-    const existingUser = await prisma.user.findUnique({
+    const existingUserByUsername = await prisma.user.findUnique({
       where: { username },
     });
 
-    if (existingUser) {
+    if (existingUserByUsername) {
       return NextResponse.json(
         { message: 'このユーザー名は既に使用されています' },
+        { status: 400 }
+      );
+    }
+
+    // メールアドレスの重複チェック
+    const existingUserByEmail = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUserByEmail) {
+      return NextResponse.json(
+        { message: 'このメールアドレスは既に使用されています' },
         { status: 400 }
       );
     }
@@ -42,6 +63,7 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.create({
       data: {
         username,
+        email,
         password: hashedPassword,
       },
     });
@@ -58,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: '登録が完了しました',
-      user: { id: user.id, username: user.username },
+      user: { id: user.id, username: user.username, email: user.email },
     });
   } catch (error) {
     console.error('Registration error:', error);

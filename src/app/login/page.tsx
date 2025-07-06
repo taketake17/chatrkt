@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,7 +36,7 @@ export default function LoginPage() {
       const response = await fetch('/api/user/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (response.ok) {
@@ -71,18 +71,18 @@ export default function LoginPage() {
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-300">
-                ユーザー名
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+                メールアドレス
               </label>
               <input
-                id="username"
-                name="username"
-                type="text"
+                id="email"
+                name="email"
+                type="email"
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 rounded-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
-                placeholder="ユーザー名を入力"
+                placeholder="メールアドレスを入力"
               />
             </div>
             

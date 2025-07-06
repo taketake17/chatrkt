@@ -7,23 +7,23 @@ export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    const { email, password } = await request.json();
 
-    if (!username || !password) {
+    if (!email || !password) {
       return NextResponse.json(
-        { message: 'ユーザー名とパスワードを入力してください' },
+        { message: 'メールアドレスとパスワードを入力してください' },
         { status: 400 }
       );
     }
 
-    // ユーザーを検索
+    // ユーザーを検索（メールアドレスで）
     const user = await prisma.user.findUnique({
-      where: { username },
+      where: { email },
     });
 
     if (!user) {
       return NextResponse.json(
-        { message: 'ユーザー名またはパスワードが間違っています' },
+        { message: 'メールアドレスまたはパスワードが間違っています' },
         { status: 401 }
       );
     }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { message: 'ユーザー名またはパスワードが間違っています' },
+        { message: 'メールアドレスまたはパスワードが間違っています' },
         { status: 401 }
       );
     }
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: 'ログインに成功しました',
-      user: { id: user.id, username: user.username },
+      user: { id: user.id, username: user.username, email: user.email },
     });
   } catch (error) {
     console.error('Authentication error:', error);

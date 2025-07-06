@@ -6,6 +6,7 @@ import Link from 'next/link';
 
 export default function RegisterPage() {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -49,7 +50,7 @@ export default function RegisterPage() {
       const response = await fetch('/api/user/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, email, password }),
       });
 
       if (response.ok) {
@@ -96,6 +97,22 @@ export default function RegisterPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 rounded-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
                 placeholder="ユーザー名を入力"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+                メールアドレス
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 rounded-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
+                placeholder="メールアドレスを入力"
               />
             </div>
             

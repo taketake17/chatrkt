@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
       user = await prisma.user.create({
         data: {
           username: 'anonymous',
+          email: 'anonymous@temp.com',
           password: 'temp', // 一時的
         }
       });
