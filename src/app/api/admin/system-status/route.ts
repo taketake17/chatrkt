@@ -1,19 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 
-// グローバル変数で状態を共有
-declare global {
-  var systemStatus: 'active' | 'maintenance' | undefined;
-}
-
-if (!global.systemStatus) {
-  global.systemStatus = 'active';
-}
-
 export async function GET() {
   try {
-    return NextResponse.json({ status: global.systemStatus || 'active' });
+    let systemSetting = await prisma.systemSettings.findUnique({
+      where: { key: 'system_status' }
+    });
+
+    if (!systemSetting) {
+      // 初回実行時にデフォルト値を作成
+      systemSetting = await prisma.systemSettings.create({
+        data: {
+          key: 'system_status',
+          value: 'active'
+        }
+      });
+    }
+
+    return NextResponse.json({ status: systemSetting.value });
   } catch (error) {
     console.error('Failed to get system status:', error);
     return NextResponse.json(
@@ -43,10 +49,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    global.systemStatus = status;
+    // データベースでステータスを更新
+    await prisma.systemSettings.upsert({
+      where: { key: 'system_status' },
+      update: { value: status },
+      create: {
+        key: 'system_status',
+        value: status
+      }
+    });
 
     return NextResponse.json({ 
-      status: global.systemStatus,
+      status: status,
       message: `システムステータスを${status === 'active' ? '稼働中' : 'メンテナンス中'}に変更しました`
     });
   } catch (error) {
