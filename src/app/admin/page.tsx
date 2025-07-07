@@ -286,9 +286,9 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">管理者ダッシュボード</h1>
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 lg:mb-8 space-y-4 lg:space-y-0">
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">管理者ダッシュボード</h1>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
             <div className="text-sm text-gray-600">
               管理者: admin
             </div>
@@ -302,28 +302,30 @@ export default function AdminPage() {
                 {systemStatus === 'active' ? '稼働中' : 'メンテナンス中'}
               </span>
             </div>
-            <button
-              onClick={() => updateSystemStatus(systemStatus === 'active' ? 'maintenance' : 'active')}
-              className={`px-4 py-2 text-white rounded-lg transition-colors text-sm ${
-                systemStatus === 'active'
-                  ? 'bg-yellow-500 hover:bg-yellow-600'
-                  : 'bg-green-500 hover:bg-green-600'
-              }`}
-            >
-              {systemStatus === 'active' ? 'メンテナンス開始' : 'メンテナンス終了'}
-            </button>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
-            >
-              ログアウト
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => updateSystemStatus(systemStatus === 'active' ? 'maintenance' : 'active')}
+                className={`px-3 lg:px-4 py-2 text-white rounded-lg transition-colors text-xs lg:text-sm ${
+                  systemStatus === 'active'
+                    ? 'bg-yellow-500 hover:bg-yellow-600'
+                    : 'bg-green-500 hover:bg-green-600'
+                }`}
+              >
+                {systemStatus === 'active' ? 'メンテナンス開始' : 'メンテナンス終了'}
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-3 lg:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs lg:text-sm"
+              >
+                ログアウト
+              </button>
+            </div>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex space-x-4 mb-4 border-b">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+          <div className="bg-white rounded-lg shadow-md p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:space-x-4 mb-4 border-b space-y-2 sm:space-y-0">
               <button
                 onClick={() => setActiveTab('unanswered')}
                 className={`pb-2 px-1 ${
@@ -346,7 +348,7 @@ export default function AdminPage() {
               </button>
             </div>
             
-            <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="space-y-3 lg:space-y-4 max-h-64 lg:max-h-96 overflow-y-auto">
               {activeTab === 'unanswered' ? (
                 unansweredMessages.length === 0 ? (
                   <p className="text-gray-500">未回答の質問はありません</p>
@@ -354,14 +356,14 @@ export default function AdminPage() {
                   unansweredMessages.map((message) => (
                     <div
                       key={message.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      className={`p-3 lg:p-4 border rounded-lg cursor-pointer transition-colors ${
                         selectedMessage?.id === message.id
                           ? 'bg-blue-50 border-blue-300'
                           : 'hover:bg-gray-50'
                       }`}
                       onClick={() => setSelectedMessage(message)}
                     >
-                      <div className="text-sm text-gray-500 mb-2 flex justify-between">
+                      <div className="text-xs lg:text-sm text-gray-500 mb-2 flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
                         <span>{new Date(message.createdAt).toLocaleString('ja-JP')}</span>
                         <span className="font-medium text-blue-600">
                           ユーザー: {message.session.user?.username || '不明'}
@@ -446,8 +448,8 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4 text-gray-900">回答を作成</h2>
+          <div className="bg-white rounded-lg shadow-md p-4 lg:p-6">
+            <h2 className="text-lg lg:text-xl font-bold mb-4 text-gray-900">回答を作成</h2>
             {selectedMessage ? (
               <form onSubmit={handleAnswer}>
                 <div className="mb-4">
@@ -482,8 +484,8 @@ export default function AdminPage() {
                   <textarea
                     value={answerContent}
                     onChange={(e) => setAnswerContent(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500"
-                    rows={8}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder-gray-500 text-sm lg:text-base"
+                    rows={6}
                     placeholder="回答を入力してください..."
                     required
                   />

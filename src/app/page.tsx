@@ -16,6 +16,7 @@ export default function Home() {
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState<{ id: string; username: string } | null>(null);
   const [systemStatus, setSystemStatus] = useState<'active' | 'maintenance'>('active');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -262,44 +263,83 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-900">
-      {/* サイドバーは認証されている場合のみ表示 */}
+    <div className="flex h-screen bg-gray-900 relative">
+      {/* デスクトップサイドバー */}
       {isAuthenticated && (
-        <Sidebar
-          onNewChat={createNewSession}
-          onSelectChat={loadSession}
-          currentSessionId={sessionId}
-        />
+        <div className="hidden lg:block">
+          <Sidebar
+            onNewChat={createNewSession}
+            onSelectChat={loadSession}
+            currentSessionId={sessionId}
+          />
+        </div>
       )}
-      <div className="flex-1 flex flex-col">
+      
+      {/* モバイルサイドバーオーバーレイ */}
+      {isAuthenticated && isMobileSidebarOpen && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+          <div className="fixed left-0 top-0 h-full z-50 lg:hidden">
+            <Sidebar
+              onNewChat={() => {
+                createNewSession();
+                setIsMobileSidebarOpen(false);
+              }}
+              onSelectChat={(id) => {
+                loadSession(id);
+                setIsMobileSidebarOpen(false);
+              }}
+              currentSessionId={sessionId}
+            />
+          </div>
+        </>
+      )}
+      
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="bg-gray-800 border-b border-gray-700 px-6 py-3 flex items-center justify-between">
-          <div className="text-white font-semibold">
-            Chat RKT
+        <div className="bg-gray-800 border-b border-gray-700 px-4 lg:px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            {/* モバイルハンバーガーメニュー */}
+            {isAuthenticated && (
+              <button
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="lg:hidden p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            )}
+            <div className="text-white font-semibold text-lg lg:text-xl">
+              Chat RKT
+            </div>
           </div>
           {isAuthenticated && user ? (
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-300 text-sm">
+            <div className="flex items-center space-x-2 lg:space-x-4">
+              <span className="text-gray-300 text-xs lg:text-sm hidden sm:block">
                 {user.username}
               </span>
               <button
                 onClick={handleLogout}
-                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+                className="px-2 lg:px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs lg:text-sm"
               >
                 ログアウト
               </button>
             </div>
           ) : (
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 lg:space-x-4">
               <button
                 onClick={() => router.push('/login')}
-                className="px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors text-sm"
+                className="px-2 lg:px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors text-xs lg:text-sm"
               >
                 ログイン
               </button>
               <button
                 onClick={() => router.push('/register')}
-                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+                className="px-2 lg:px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs lg:text-sm"
               >
                 新規登録
               </button>
@@ -308,20 +348,20 @@ export default function Home() {
         </div>
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center bg-gray-900 text-white">
-            <div className="max-w-3xl mx-auto text-center px-6">
-              <div className="mb-8">
-                <h1 className="text-4xl font-semibold mb-4 text-gray-100">
+            <div className="max-w-3xl mx-auto text-center px-4 lg:px-6">
+              <div className="mb-6 lg:mb-8">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-4 text-gray-100">
                   {isAuthenticated && user ? `こんにちは、${user.username}さん！` : 'Chat RKT'}
                 </h1>
-                <p className="text-lg text-gray-400 mb-4">
+                <p className="text-base lg:text-lg text-gray-400 mb-4">
                   {isAuthenticated ? '何でもお気軽にお聞きください' : 'Chat RKTとの「本気」の対話を、あなたに。'}
                 </p>
-                <p className="text-md text-gray-500 mb-8">
+                <p className="text-sm lg:text-base text-gray-500 mb-6 lg:mb-8">
                   {isAuthenticated ? 'まるで大切な友人のように、あなたの言葉に耳を傾け、人間味あふれる対話でお応えします。' : '人間味あふれる「本気」の対話で、あなたの心に寄り添います。'}
                 </p>
                 
                 {/* システムステータス表示 */}
-                <div className={`inline-block px-4 py-2 rounded-lg mb-6 ${
+                <div className={`inline-block px-3 lg:px-4 py-2 rounded-lg mb-4 lg:mb-6 ${
                   systemStatus === 'active' 
                     ? 'bg-green-900 text-green-200 border border-green-700' 
                     : 'bg-yellow-900 text-yellow-200 border border-yellow-700'
@@ -330,7 +370,7 @@ export default function Home() {
                     <div className={`w-2 h-2 rounded-full ${
                       systemStatus === 'active' ? 'bg-green-400' : 'bg-yellow-400'
                     }`}></div>
-                    <span className="text-sm font-medium">
+                    <span className="text-xs lg:text-sm font-medium">
                       {systemStatus === 'active' 
                         ? 'Chat RKTは元気に稼働中です。' 
                         : 'ただいまChat RKTは休憩中です。再開をお待ちください。'}

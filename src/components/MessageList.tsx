@@ -12,16 +12,16 @@ interface MessageListProps {
 export function MessageList({ messages, loading }: MessageListProps) {
   return (
     <div className="flex-1 overflow-y-auto bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-4xl mx-auto px-2 lg:px-4 py-4 lg:py-6 space-y-4 lg:space-y-6">
         {messages.map((message) => (
           <div key={message.id} className="group">
             <div
-              className={`flex items-start space-x-3 ${
+              className={`flex items-start space-x-2 lg:space-x-3 ${
                 message.type === 'USER' ? 'flex-row-reverse space-x-reverse' : ''
               }`}
             >
               <div
-                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                className={`flex-shrink-0 w-6 h-6 lg:w-8 lg:h-8 rounded-full flex items-center justify-center text-xs lg:text-sm font-semibold ${
                   message.type === 'USER'
                     ? 'bg-emerald-600 text-white'
                     : 'bg-gray-700 text-gray-300'
@@ -30,7 +30,7 @@ export function MessageList({ messages, loading }: MessageListProps) {
                 {message.type === 'USER' ? 'You' : 'AI'}
               </div>
               <div
-                className={`flex-1 rounded-xl px-4 py-3 relative ${
+                className={`flex-1 rounded-xl px-3 lg:px-4 py-2 lg:py-3 relative max-w-xs sm:max-w-sm md:max-w-md lg:max-w-none ${
                   message.type === 'USER'
                     ? 'bg-emerald-600 text-white'
                     : `bg-gray-800 text-gray-100 border ${
@@ -45,7 +45,7 @@ export function MessageList({ messages, loading }: MessageListProps) {
                     NEW
                   </div>
                 )}
-                <div className={`prose prose-sm max-w-none ${
+                <div className={`prose prose-sm lg:prose-base max-w-none ${
                   message.type === 'USER' ? 'prose-invert' : 'prose-gray prose-headings:text-gray-200 prose-p:text-gray-300 prose-strong:text-gray-200 prose-code:text-gray-200 prose-pre:bg-gray-900'
                 }`}>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
